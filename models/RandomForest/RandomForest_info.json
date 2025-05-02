@@ -1,0 +1,18 @@
+{
+    "Method": "RandomForest",
+    "Pre-processing": "StandardScaler()",
+    "Data splits": "5-fold cross validation",
+    "Feature extraction": "None",
+    "MAE on validation set (mm)": "0.0026",
+    "MAE on test set": "0.0020",
+    "Accuracy on validation set": "0.9974",
+    "Accuracy on test set": "0.9980",
+    "Cross-validation mean accuracy": "0.9981",
+    "Cross-validation std accuracy": "0.0008",
+    "Training time (s)": "13.78",
+    "Tuned parameters": {
+        "classifier__max_depth": 20,
+        "classifier__n_estimators": 100
+    },
+    "Timestamp": "2025-05-02 09:33:04"
+}

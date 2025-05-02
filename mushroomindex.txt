@@ -1,0 +1,174 @@
+Mushroom Data Transformatie Index
+================================
+
+Kolom: cap-diameter
+Range 0: 0.38 - 12.77
+Range 1: 12.77 - 25.16
+Range 2: 25.16 - 37.56
+Range 3: 37.56 - 49.95
+Range 4: 49.95 - 62.34
+
+Kolom: stem-height
+Range 0: 0.00 - 6.78
+Range 1: 6.78 - 13.57
+Range 2: 13.57 - 20.35
+Range 3: 20.35 - 27.14
+Range 4: 27.14 - 33.92
+
+Kolom: stem-width
+Range 0: 0.00 - 20.78
+Range 1: 20.78 - 41.56
+Range 2: 41.56 - 62.35
+Range 3: 62.35 - 83.13
+Range 4: 83.13 - 103.91
+
+Kolom: class
+p -> 0
+e -> 1
+
+Kolom: cap-shape
+x -> 0
+f -> 1
+p -> 2
+b -> 3
+c -> 4
+s -> 5
+o -> 6
+
+Kolom: cap-surface
+g -> 0
+h -> 1
+t -> 2
+y -> 3
+e -> 4
+s -> 5
+l -> 6
+d -> 7
+w -> 8
+i -> 9
+k -> 10
+
+Kolom: cap-color
+o -> 0
+e -> 1
+n -> 2
+g -> 3
+r -> 4
+w -> 5
+y -> 6
+p -> 7
+u -> 8
+b -> 9
+l -> 10
+k -> 11
+
+Kolom: does-bruise-or-bleed
+f -> 0
+t -> 1
+
+Kolom: gill-attachment
+e -> 0
+a -> 1
+d -> 2
+s -> 3
+x -> 4
+p -> 5
+f -> 6
+
+Kolom: gill-spacing
+c -> 0
+d -> 1
+f -> 2
+
+Kolom: gill-color
+w -> 0
+n -> 1
+p -> 2
+u -> 3
+b -> 4
+g -> 5
+y -> 6
+r -> 7
+e -> 8
+o -> 9
+k -> 10
+f -> 11
+
+Kolom: stem-root
+s -> 0
+b -> 1
+r -> 2
+c -> 3
+f -> 4
+
+Kolom: stem-surface
+y -> 0
+s -> 1
+k -> 2
+i -> 3
+h -> 4
+t -> 5
+g -> 6
+f -> 7
+
+Kolom: stem-color
+w -> 0
+y -> 1
+n -> 2
+u -> 3
+b -> 4
+l -> 5
+r -> 6
+p -> 7
+e -> 8
+k -> 9
+g -> 10
+o -> 11
+f -> 12
+
+Kolom: veil-color
+w -> 0
+y -> 1
+n -> 2
+e -> 3
+u -> 4
+k -> 5
+
+Kolom: has-ring
+t -> 0
+f -> 1
+
+Kolom: ring-type
+g -> 0
+p -> 1
+e -> 2
+l -> 3
+f -> 4
+m -> 5
+r -> 6
+z -> 7
+
+Kolom: spore-print-color
+w -> 0
+p -> 1
+k -> 2
+r -> 3
+u -> 4
+n -> 5
+g -> 6
+
+Kolom: habitat
+d -> 0
+m -> 1
+g -> 2
+h -> 3
+l -> 4
+p -> 5
+w -> 6
+u -> 7
+
+Kolom: season
+w -> 0
+u -> 1
+a -> 2
+s -> 3
