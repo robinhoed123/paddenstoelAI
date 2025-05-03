@@ -152,7 +152,7 @@ def train_and_evaluate_classifier(X_train, X_val, X_test, y_train, y_val, y_test
     
     return best_pipeline, scores
 
-# Laad data (voorbeeld)
+
 def load_data():
 
     # Laad de dataset
@@ -177,7 +177,7 @@ def load_data():
     
     return X_train, X_val, X_test, y_train, y_val, y_test
 
-# Hoofdfunctie
+
 def main():
     """Hoofdfunctie om alle classifiers te trainen"""
     
@@ -194,13 +194,13 @@ def main():
                 "classifier__max_depth": [None, 10, 20],
             }
         },
-        "SVM": {
-            "clf": SVC(probability=True, random_state=randstate),
-            "params": {
-                "classifier__C": [0.1, 1, 10],
-                "classifier__kernel": ["linear", "rbf"],
-            }
-        },
+        # "SVM": {
+        #     "clf": SVC(probability=True, random_state=randstate),
+        #     "params": {
+        #         "classifier__C": [0.1, 1, 10],
+        #         "classifier__kernel": ["linear", "rbf"],
+        #     }
+        # },
         "AdaBoost": {
             "clf": AdaBoostClassifier(random_state=randstate),
             "params": {

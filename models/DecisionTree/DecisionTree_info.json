@@ -1,0 +1,18 @@
+{
+    "Method": "DecisionTree",
+    "Pre-processing": "StandardScaler()",
+    "Data splits": "5-fold cross validation",
+    "Feature extraction": "None",
+    "MAE on validation set (mm)": "0.0029",
+    "MAE on test set": "0.0022",
+    "Accuracy on validation set": "0.9971",
+    "Accuracy on test set": "0.9978",
+    "Cross-validation mean accuracy": "0.9979",
+    "Cross-validation std accuracy": "0.0007",
+    "Training time (s)": "0.85",
+    "Tuned parameters": {
+        "classifier__max_depth": null,
+        "classifier__min_samples_split": 2
+    },
+    "Timestamp": "2025-05-02 13:13:55"
+}

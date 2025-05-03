@@ -54,43 +54,73 @@ def visualize_correlation_matrix(df, output_dir):
         print(f"Error creating correlation matrix: {e}")
 
 def visualize_column_frequencies(df, output_dir):
-    """Create and save frequency plots for each column"""
+    """Create and save frequency plots for each column in a single figure with subplots"""
     try:
-        for column in df.columns:
-            plt.figure(figsize=(10, 6))
+        num_columns = len(df.columns)
+        num_rows = (num_columns + 2) // 4  # Arrange subplots in a grid with 3 columns
+        
+        fig, axes = plt.subplots(num_rows, 4, figsize=(15, 5 * num_rows))
+        axes = axes.flatten()  # Flatten axes for easy iteration
+        
+        for i, column in enumerate(df.columns):
+            ax = axes[i]
+            value_counts = df[column].value_counts().sort_values(ascending=False)
             
-            # Handle different column types
-            if df[column].dtype in [np.number]:
-                # For numeric columns, create a histogram
-                sns.histplot(df[column], kde=True)
-                plt.title(f'Frequency Distribution of {column}', fontsize=14)
-                plt.xlabel(column)
-                plt.ylabel('Frequency')
-            else:
-                # For categorical columns, create a bar plot
-                value_counts = df[column].value_counts().sort_values(ascending=False)
-                # Limit to top 20 values if there are too many
-                if len(value_counts) > 20:
-                    value_counts = value_counts.head(20)
-                    plt.title(f'Top 20 Frequency Distribution of {column}', fontsize=14)
-                else:
-                    plt.title(f'Frequency Distribution of {column}', fontsize=14)
-                
-                sns.barplot(x=value_counts.index, y=value_counts.values)
-                plt.xticks(rotation=45, ha='right')
-                plt.xlabel(column)
-                plt.ylabel('Count')
-            
-            plt.tight_layout()
-            
-            # Save the visualization
-            safe_column_name = column.replace('/', '_').replace('\\', '_')
-            output_path = os.path.join(output_dir, f'frequency_{safe_column_name}.png')
-            plt.savefig(output_path, dpi=300)
-            plt.close()
-            print(f"Frequency plot for {column} saved to {output_path}")
+            sns.barplot(x=value_counts.index, y=value_counts.values, ax=ax)
+            ax.set_title(f'Frequency of {column}', fontsize=12)
+            ax.set_xlabel(column)
+            ax.set_ylabel('Count')
+        
+        # Hide any unused subplots
+        for j in range(i + 1, len(axes)):
+            fig.delaxes(axes[j])
+        
+        plt.tight_layout()
+        
+        # Save the visualization
+        output_path = os.path.join(output_dir, 'frequency_subplots.png')
+        plt.savefig(output_path, dpi=300)
+        plt.close()
+        print(f"Frequency plots saved to {output_path}")
     except Exception as e:
         print(f"Error creating frequency plots: {e}")
+def visualize_float_column_plots(columns, df, output_dir):
+    """Create and save line plots for float columns"""
+    try:
+        # Filter float columns
+        float_columns = [col for col in columns if df[col].dtype == 'float64']
+        
+        if not float_columns:
+            print("No float columns found for plotting")
+            return
+        
+        num_columns = len(float_columns)
+        num_rows = (num_columns + 2) // 3  # Arrange subplots in a grid with 3 columns
+        
+        fig, axes = plt.subplots(num_rows, 3, figsize=(15, 5 * num_rows))
+        axes = axes.flatten()  # Flatten axes for easy iteration
+        
+        for i, column in enumerate(float_columns):
+            ax = axes[i]
+            ax.plot(df[column], marker='.', linestyle='-', label=column)
+            ax.set_title(f'Plot of {column}', fontsize=12)
+            ax.set_xlabel('Index')
+            ax.set_ylabel(column)
+            ax.legend()
+        
+        # Hide any unused subplots
+        for j in range(i + 1, len(axes)):
+            fig.delaxes(axes[j])
+        
+        plt.tight_layout()
+        
+        # Save the visualization
+        output_path = os.path.join(output_dir, 'float_column_plots.png')
+        plt.savefig(output_path, dpi=300)
+        plt.close()
+        print(f"Float column plots saved to {output_path}")
+    except Exception as e:
+        print(f"Error creating float column plots: {e}")
 
 def visualize_boxplots(df, output_dir):
     """Create and save boxplots for numeric columns"""
@@ -147,33 +177,6 @@ def visualize_pairplot(df, output_dir):
     except Exception as e:
         print(f"Error creating pairplot: {e}")
 
-def visualize_missing_values(df, output_dir):
-    """Create and save visualization of missing values"""
-    try:
-        plt.figure(figsize=(12, 8))
-        
-        # Calculate missing values
-        missing = df.isnull().sum()
-        missing = missing[missing > 0].sort_values(ascending=False)
-        
-        if missing.empty:
-            print("No missing values found in the dataset")
-            return
-        
-        # Create bar plot of missing values
-        sns.barplot(x=missing.index, y=missing.values)
-        plt.title('Missing Values by Column', fontsize=14)
-        plt.xticks(rotation=45, ha='right')
-        plt.ylabel('Count of Missing Values')
-        plt.tight_layout()
-        
-        # Save the visualization
-        output_path = os.path.join(output_dir, 'missing_values.png')
-        plt.savefig(output_path, dpi=300)
-        plt.close()
-        print(f"Missing values plot saved to {output_path}")
-    except Exception as e:
-        print(f"Error creating missing values plot: {e}")
 
 def main():
     """Main function to run all visualization functions"""
@@ -187,13 +190,13 @@ def main():
     
     if df is not None:
         print("\nGenerating visualizations...")
-        
         # Generate all visualizations
         visualize_correlation_matrix(df, output_dir)
         visualize_column_frequencies(df, output_dir)
-        visualize_boxplots(df, output_dir)
-        visualize_pairplot(df, output_dir)
-        visualize_missing_values(df, output_dir)
+        #visualize_float_column_plots(["stem-width", "stem-height","cap-diameter"], df, output_dir)
+        # visualize_boxplots(df, output_dir)
+        # visualize_pairplot(df, output_dir)
+        # visualize_missing_values(df, output_dir)
         
         print(f"\nVisualization complete! All images saved to the '{output_dir}' directory.")
     else:

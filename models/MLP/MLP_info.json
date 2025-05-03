@@ -1,0 +1,22 @@
+{
+    "Method": "MLP",
+    "Pre-processing": "None",
+    "Data splits": "5-fold cross validation",
+    "Feature extraction": "None",
+    "MAE on validation set (mm)": "0.0037",
+    "MAE on test set": "0.0029",
+    "Accuracy on validation set": "0.9963",
+    "Accuracy on test set": "0.9971",
+    "Cross-validation mean accuracy": "0.9967",
+    "Cross-validation std accuracy": "0.0008",
+    "Training time (s)": "3000.33",
+    "Tuned parameters": {
+        "classifier__alpha": 0.0001,
+        "classifier__batch_size": 64,
+        "classifier__hidden_layer_sizes": [
+            50,
+            50
+        ]
+    },
+    "Timestamp": "2025-05-02 14:10:18"
+}
