@@ -3,16 +3,16 @@
     "Pre-processing": "MinMaxScaler()",
     "Data splits": "5-fold cross validation",
     "Feature extraction": "None",
-    "MAE on validation set (mm)": "0.0031",
-    "MAE on test set": "0.0025",
-    "Accuracy on validation set": "0.9969",
-    "Accuracy on test set": "0.9975",
-    "Cross-validation mean accuracy": "0.9972",
-    "Cross-validation std accuracy": "0.0009",
-    "Training time (s)": "4.17",
+    "MAE on validation set (mm)": "0.0020",
+    "MAE on test set": "0.0020",
+    "Accuracy on validation set": "0.9980",
+    "Accuracy on test set": "0.9980",
+    "Cross-validation mean accuracy": "0.9978",
+    "Cross-validation std accuracy": "0.0005",
+    "Training time (s)": "5.14",
     "Tuned parameters": {
         "classifier__n_neighbors": 3,
         "classifier__weights": "distance"
     },
-    "Timestamp": "2025-05-02 13:14:01"
+    "Timestamp": "2025-05-05 08:42:21"
 }

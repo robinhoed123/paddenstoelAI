@@ -15,7 +15,6 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
-from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.neural_network import MLPClassifier
 
 # Seed voor reproduceerbaarheid

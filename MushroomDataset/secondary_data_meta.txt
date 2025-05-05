@@ -30,17 +30,21 @@
 6. Variable Information:
    (n: nominal, m: metrical; nominal values as sets of values)
    1. cap-diameter (m):			float number in cm
-   2. cap-shape (n):            bell=b, conical=c, convex=x, flat=f,
+   2. cap-shape (n):            bell=, conical=c, convex=x, flat=f,
                                 sunken=s, spherical=p, others=o
+
+								
    3. cap-surface (n):          fibrous=i, grooves=g, scaly=y, smooth=s,
 								shiny=h, leathery=l, silky=k, sticky=t,
 								wrinkled=w, fleshy=e
+
+
    4. cap-color (n):            brown=n, buff=b, gray=g, green=r, pink=p,
 								purple=u, red=e, white=w, yellow=y, blue=l, 
 								orange=o,  black=k
    5. does-bruise-bleed (n):	bruises-or-bleeding=t,no=f
    6. gill-attachment (n):      adnate=a, adnexed=x, decurrent=d, free=e, 
-								sinuate=s, pores=p, none=f, unknown=?
+								sinuate=s, pores=p, none=f,
    7. gill-spacing (n):         close=c, distant=d, none=f
    8. gill-color (n):           see cap-color + none=f
    9. stem-height (m):			float number in cm

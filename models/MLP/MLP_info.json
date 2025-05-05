@@ -3,13 +3,13 @@
     "Pre-processing": "None",
     "Data splits": "5-fold cross validation",
     "Feature extraction": "None",
-    "MAE on validation set (mm)": "0.0037",
-    "MAE on test set": "0.0029",
-    "Accuracy on validation set": "0.9963",
-    "Accuracy on test set": "0.9971",
-    "Cross-validation mean accuracy": "0.9967",
-    "Cross-validation std accuracy": "0.0008",
-    "Training time (s)": "3000.33",
+    "MAE on validation set (mm)": "0.0043",
+    "MAE on test set": "0.0039",
+    "Accuracy on validation set": "0.9957",
+    "Accuracy on test set": "0.9961",
+    "Cross-validation mean accuracy": "0.9963",
+    "Cross-validation std accuracy": "0.0005",
+    "Training time (s)": "385.61",
     "Tuned parameters": {
         "classifier__alpha": 0.0001,
         "classifier__batch_size": 64,
@@ -18,5 +18,5 @@
             50
         ]
     },
-    "Timestamp": "2025-05-02 14:10:18"
+    "Timestamp": "2025-05-05 08:50:05"
 }

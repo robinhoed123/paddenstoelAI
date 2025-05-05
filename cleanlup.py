@@ -43,16 +43,14 @@ def categorical_to_integer(df_column, file_path):
     
     return transformed_column
 
-def float_to_categorical(df_column, num_divisions, file_path):
+def float_to_categorical(df_column, num_divisions,max_val, file_path):
 
     # Bepaal de minimum- en maximumwaarde in de kolom
     # Converteer de kolom naar floats, negeer niet-numerieke waarden
     df_column = pd.to_numeric(df_column, errors='coerce')
     
     # Bepaal de minimum- en maximumwaarde in de kolom
-    min_val = df_column.min()
-    max_val = df_column.max()
-    
+    min_val = df_column.min()    
     # Bereken de breedte van elke range
     range_width = (max_val-min_val) / num_divisions
     
@@ -99,19 +97,24 @@ def main():
     # Vul alle null-waarden in
     df_clean = fill_null(df)
     
-    # Verwerk float kolommen naar categorische data
-    float_columns = [1, 9, 10]
-    for col_idx in float_columns:
-        col_name = df_clean.columns[col_idx]
-        df_clean[col_name] = float_to_categorical(df_clean[col_name], 5, 'mushroomindex.txt')
-    
+    # Verwerk float kolommen naar categorische data\
+    df_clean["cap-diameter"] = float_to_categorical(df_clean["cap-diameter"], 20,24, 'mushroomindex.txt')
+    df_clean["stem-height"]= float_to_categorical(df_clean["stem-height"], 20,19, 'mushroomindex.txt')
+    df_clean["stem-width"] = float_to_categorical(df_clean["stem-width"], 20,42, 'mushroomindex.txt')
+
     # Verwerk categorische kolommen naar integers
     categorical_columns = [0,2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 15, 16, 17, 18, 19, 20]
     for col_idx in categorical_columns:
         col_name = df_clean.columns[col_idx]
         df_clean[col_name] = categorical_to_integer(df_clean[col_name], 'mushroomindex.txt')
     #de reden waarom dit gedropt wordt is dat alle waarde van deze feuter 0 zijn (heeft geen waarde)
-    df_clean = df_clean.drop(["veil-type"], axis=1)
+    df_clean = df_clean.drop(["veil-type"], axis=1)#alle waarde hier zijn het zelfde voegt niets toe
+    df_clean = df_clean.drop(["gill-color"], axis=1) #het zelfde als cap-color 
+    df_clean = df_clean.drop(["stem-color"], axis=1) #het zelfde als cap-color 
+    df_clean = df_clean.drop(["veil-color"], axis=1) #het zelfde als cap-color 
+    df_clean = df_clean.drop(["spore-print-color"], axis=1) #het zelfde als cap-color 
+    df_clean = df_clean.drop(["stem-surface"], axis=1) #het zelfde als cap-survice
+
     # dataframe opslaan
     df_clean.to_csv('MushroomDataset/Mushroomdataclean.csv', index=False)
     print(df_clean.info())
