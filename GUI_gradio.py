@@ -4,13 +4,12 @@ import csv
 
 prodiction = None
 confidence = 0.0
-model="RandomForest"
-def prediction(input_data):
+modelName="RandomForest"
+def make_prediction(input_data):
     global prodiction, confidence,model
     try:
         # Load the AI model from a joblib file
-        model = load("models\RandomForest\RandomForest_model.joblib")
-        #fixen want dit werkt niet model = load(f"models\{model}\{model}_model.joblib")
+        model = load(f"models\{modelName}\{modelName}_model.joblib")
 
         # Predict
         prediction = model.predict([input_data])
@@ -18,7 +17,7 @@ def prediction(input_data):
         
         # Get the predicted feature and its confidence
         predicted_feature = prediction[0]
-        confidence = max(probabilities[0]) * 100  # Convert to percentage
+        confidence = max(probabilities[0]) * 100  #om zetten naar procent
         if predicted_feature == 1:
             prodiction = "edible"
         elif predicted_feature == 0:
@@ -145,24 +144,25 @@ def collect_data(cap_diameter, stem_height, stem_width, gill_spacing,
     data.append(string_int_lookup(season))
     print(season)
 
-    return prediction(data) 
+    return make_prediction(data) 
 def save_data_to_csv(cap_diameter, stem_height, stem_width, gill_spacing, 
                      does_bruise_bleed, has_ring, cap_shape, 
                      surface, color, gill_attachment, stem_root, ring_type, 
-                     habitat, season, result, confidence):
-    global model
+                     habitat, season):
+    global modelName,prodiction,confidence
     # file path
-    file_path = f"resultatenGUI/mushroom_data({model}).csv"
-    
+    file_path = f"resultatenGUI/mushroom_data({modelName}).csv"
+    print("test")
+    print(modelName)
     # data
     data_row = [
         cap_diameter, stem_height, stem_width, gill_spacing, 
         does_bruise_bleed, has_ring, cap_shape, 
         surface, color, gill_attachment, stem_root, ring_type, 
-        habitat, season, result, confidence
+        habitat, season, prodiction, confidence
     ]
     
-    # Write  CSV file
+    # Write CSV file
     try:
         with open(file_path, mode='a', newline='', encoding='utf-8') as file:
             writer = csv.writer(file)
@@ -179,7 +179,7 @@ def save_data_to_csv(cap_diameter, stem_height, stem_width, gill_spacing,
     except Exception as e:
         return f"An error occurred while saving: {str(e)}"
 
-# D interface
+# interface
 with gr.Blocks() as app:
     gr.Markdown("# Mushroom Data Interface")
     
@@ -231,7 +231,7 @@ with gr.Blocks() as app:
     output = gr.Textbox(label="Result")
     
     # Submit knop
-    submit_btn = gr.Button("Submit")
+    submit_btn = gr.Button("Submit") #voor een of andere reden wordt submit vert
     submit_btn.click(
         fn=collect_data,
         inputs=[cap_diameter, stem_height, stem_width, gill_spacing, 
@@ -239,25 +239,17 @@ with gr.Blocks() as app:
               surface, color, gill_attachment, stem_root, ring_type, 
               habitat, season],
         outputs=output
-    )
+    )                       
 
     # save knop
     save_btn = gr.Button("Save")
     save_btn.click(
-        fn=lambda cap_diameter, stem_height, stem_width, gill_spacing, 
-                  does_bruise_bleed, has_ring, cap_shape, 
-                  surface, color, gill_attachment, stem_root, ring_type, 
-                  habitat, season: save_data_to_csv(
-                      cap_diameter, stem_height, stem_width, gill_spacing, 
-                      does_bruise_bleed, has_ring, cap_shape, 
-                      surface, color, gill_attachment, stem_root, ring_type, 
-                      habitat, season, prodiction, confidence
-                  ),
+        fn=save_data_to_csv,
         inputs=[cap_diameter, stem_height, stem_width, gill_spacing, 
                 does_bruise_bleed, has_ring, cap_shape, 
                 surface, color, gill_attachment, stem_root, ring_type, 
                 habitat, season],
-        outputs=output
+        outputs=None
     )
         
     

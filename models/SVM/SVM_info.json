@@ -1,0 +1,18 @@
+{
+    "Method": "SVM",
+    "Pre-processing": "MinMaxScaler()",
+    "Data splits": "5-fold cross validation",
+    "Feature extraction": "None",
+    "MAE on validation set (mm)": "0.0210",
+    "MAE on test set": "0.0221",
+    "Accuracy on validation set": "0.9790",
+    "Accuracy on test set": "0.9779",
+    "Cross-validation mean accuracy": "0.9764",
+    "Cross-validation std accuracy": "0.0021",
+    "Training time (s)": "769.23",
+    "Tuned parameters": {
+        "classifier__C": 10,
+        "classifier__kernel": "rbf"
+    },
+    "Timestamp": "2025-05-05 15:45:09"
+}

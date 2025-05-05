@@ -85,7 +85,6 @@ def visualize_column_frequencies(df, output_dir):
     except Exception as e:
         print(f"Error creating frequency plots: {e}")
 def visualize_float_column_plots(columns, df, output_dir):
-    """Create and save line plots for float columns"""
     try:
         # Filter float columns
         float_columns = [col for col in columns if df[col].dtype == 'float64']
@@ -193,10 +192,9 @@ def main():
         # Generate all visualizations
         visualize_correlation_matrix(df, output_dir)
         visualize_column_frequencies(df, output_dir)
-        #visualize_float_column_plots(["stem-width", "stem-height","cap-diameter"], df, output_dir)
+        visualize_float_column_plots(["stem-width", "stem-height","cap-diameter"], df, output_dir)
         # visualize_boxplots(df, output_dir)
         # visualize_pairplot(df, output_dir)
-        # visualize_missing_values(df, output_dir)
         
         print(f"\nVisualization complete! All images saved to the '{output_dir}' directory.")
     else:

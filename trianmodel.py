@@ -7,7 +7,6 @@ from datetime import datetime
 from joblib import dump, load
 
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split, KFold
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_absolute_error, accuracy_score, classification_report
@@ -16,9 +15,10 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
-# Seed voor reproduceerbaarheid
-randstate = 42
+# Seed
+randstate = 42 #het was een goede film :)
 np.random.seed(randstate)
 
 # Map voor opslag van modellen
@@ -26,7 +26,7 @@ BASE_MODEL_DIR = 'models'
 os.makedirs(BASE_MODEL_DIR, exist_ok=True)
 
 # Functie om resultaten op te slaan
-def save_model_info(clf_name, pipeline, scores, training_time, params, base_dir=BASE_MODEL_DIR):
+def save_model_info(clf_name, pipeline,y_test, y_test_pred, scores, training_time, params, base_dir=BASE_MODEL_DIR):
     """Sla model en bijbehorende informatie op"""
     # Maak directory voor deze classifier
     model_dir = os.path.join(base_dir, clf_name)
@@ -58,8 +58,21 @@ def save_model_info(clf_name, pipeline, scores, training_time, params, base_dir=
     with open(info_path, 'w') as f:
         json.dump(info, f, indent=4)
     
-    print(f"Model en informatie opgeslagen in: {model_dir}")
+    #confusion matrix 
+    cm = confusion_matrix(y_test, y_test_pred)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=np.unique(y_test))
+    disp.plot(cmap='viridis')
+    cm_path = os.path.join(model_dir, f"{clf_name}_confusion_matrix.png")
+    disp.figure_.savefig(cm_path)
 
+    # Classification report
+    report = classification_report(y_test, y_test_pred, target_names=np.unique(y_test).astype(str))
+    report_path = os.path.join(model_dir, f"{clf_name}_classification_report.txt")
+    with open(report_path, 'w') as f:
+        f.write(report)
+
+    print(f"Model en informatie opgeslagen in: {model_dir}")
+    
 def train_and_evaluate_classifier(X_train, X_val, X_test, y_train, y_val, y_test, 
                                  clf_name, classifier, param_grid, preprocessor='standard'):
     """Train en evalueer een classifier met pipeline en grid search"""
@@ -100,7 +113,7 @@ def train_and_evaluate_classifier(X_train, X_val, X_test, y_train, y_val, y_test
         cv=kfold,
         scoring='accuracy',
         n_jobs=-1,
-        verbose=1
+        verbose=2
     )
     
     # Train het model
@@ -147,7 +160,8 @@ def train_and_evaluate_classifier(X_train, X_val, X_test, y_train, y_val, y_test
     }
     
     # Sla model en informatie op
-    save_model_info(clf_name, best_pipeline, scores, training_time, best_params)
+    save_model_info(clf_name,best_pipeline,y_test,y_test_pred,scores,training_time,best_params)
+    
     
     return best_pipeline, scores
 
@@ -179,7 +193,6 @@ def load_data():
 
 def main():
     """Hoofdfunctie om alle classifiers te trainen"""
-    
     # Laad data
     print("Data wordt geladen en gesplitst...")
     X_train, X_val, X_test, y_train, y_val, y_test = load_data()
@@ -193,13 +206,13 @@ def main():
                 "classifier__max_depth": [None, 10, 20],
             }
         },
-        # "SVM": {
-        #     "clf": SVC(probability=True, random_state=randstate),
-        #     "params": {
-        #         "classifier__C": [0.1, 1, 10],
-        #         "classifier__kernel": ["linear", "rbf"],
-        #     }
-        # },
+        "SVM": {
+            "clf": SVC(probability=True, random_state=randstate),
+            "params": {
+                "classifier__C": [0.1, 1, 10],
+                "classifier__kernel": ["linear", "rbf"],
+            }
+        },
         "AdaBoost": {
             "clf": AdaBoostClassifier(random_state=randstate),
             "params": {
@@ -244,7 +257,7 @@ def main():
             preprocessor = 'batch_norm'
         
         # Train en evalueer
-        best_pipeline, scores = train_and_evaluate_classifier(
+        scores = train_and_evaluate_classifier(
             X_train, X_val, X_test, y_train, y_val, y_test,
             name, config["clf"], config["params"], preprocessor
         )
