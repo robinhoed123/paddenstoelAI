@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import random
 
+#niet meer nodig de laatste data set die ik gebruikte had al null waarden
+
 def set_random_nulls(csv_file, columns, num_nulls, seed=None, output_file=None):
     # Stel de seed in voor de random generator
     if seed is not None:

@@ -9,10 +9,10 @@
     "Accuracy on test set": "0.9980",
     "Cross-validation mean accuracy": "0.9978",
     "Cross-validation std accuracy": "0.0005",
-    "Training time (s)": "2.45",
+    "Training time (s)": "5.47",
     "Tuned parameters": {
         "classifier__n_neighbors": 3,
         "classifier__weights": "distance"
     },
-    "Timestamp": "2025-05-05 15:45:30"
+    "Timestamp": "2025-05-10 19:26:36"
 }

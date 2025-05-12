@@ -2,9 +2,14 @@ import gradio as gr
 from joblib import load
 import csv
 
-prodiction = None
+
+# met deze code kun je heel gemakkelijk de modelen testen in een GUI
+# en de resultaten worden opgeslagen in een csv bestand
+production = None
 confidence = 0.0
 modelName="RandomForest"
+
+# functie om een voorspelling te maken met een geseledc model
 def make_prediction(input_data):
     global prodiction, confidence,model
     try:
@@ -25,6 +30,9 @@ def make_prediction(input_data):
         return f"This mushroom is : {prodiction}, Confidence: {confidence:.2f}%"
     except Exception as e:
         return f"An error occurred: {str(e)}"
+
+# functie om de string te converteren naar een int voor de modelen
+# door een lookup tabel die de string omzet naar een int
 def string_int_lookup(string):
     lookup_tabel = {
         "convex": 0,
@@ -63,19 +71,17 @@ def string_int_lookup(string):
         "sinuate": 3,
         "adnexed": 4,
         "pores": 5,
-        "none": 6,
+        "No_attachment": 6,
         "swollen": 0,
         "bulbous": 1,
         "rooted": 2,
         "club": 3,
         "Filamentous": 4,
         "ring": 0,
-        "none": 1,
         "grooved": 0,
         "pendant": 1,
         "evanescent": 2,
         "large": 3,
-        "none": 4,
         "movable": 5,
         "flaring": 6,
         "zone": 7,
@@ -90,7 +96,10 @@ def string_int_lookup(string):
         "winter": 0,
         "summer": 1,
         "autumn": 2,
-        "spring": 3
+        "spring": 3,
+        "close": 0,
+        "distant": 1
+
 }
     try: 
         x=lookup_tabel[string]
@@ -98,6 +107,9 @@ def string_int_lookup(string):
         return x
     except:
         print(f"look up {string} not found in lookup tabel")
+
+# functie om de waarde van de slider te converteren naar een int (een index van een bepaalde range)
+# dit is nodig omdat de modelen zijn getraind op een bepaalde range van waarden)
 def slider_int_corection(value,range_type):
     cap_diameter_max = [
     1.55, 2.73, 3.91, 5.09, 6.28, 7.46, 8.64, 9.82, 11.00, 12.18,
@@ -122,21 +134,25 @@ def slider_int_corection(value,range_type):
     for index, value_max in enumerate(max):
         if value >= value_max:
             return index
-    return len(max) - 1  # Return the last index if no match is found
+    return len(max) - 1  # Return de laatste index als geen match is gevonden
+
+# functie om de data te verzamelen van de interface
+# en deze te converteren naar een lijst van waarden die de modelen kunnen gebruiken
+# maakt gebruik van de eerder genoemde functies om de waarden te converteren
 def collect_data(cap_diameter, stem_height, stem_width, gill_spacing, 
                 does_bruise_bleed, has_ring, cap_shape, 
                 surface, color, gill_attachment, stem_root, ring_type, 
                 habitat, season):
     data = []
     data.append(slider_int_corection(cap_diameter,0))
+    data.append(slider_int_corection(stem_height, 1))
+    data.append(slider_int_corection(stem_width, 2))
+    data.append(string_int_lookup(gill_spacing))
     data.append(string_int_lookup(cap_shape))
     data.append(string_int_lookup(surface))
     data.append(string_int_lookup(color))
     data.append(1 if does_bruise_bleed else 0)
     data.append(string_int_lookup(gill_attachment))
-    data.append(string_int_lookup(gill_spacing))
-    data.append(slider_int_corection(stem_height, 1))
-    data.append(slider_int_corection(stem_width, 2))
     data.append(string_int_lookup(stem_root))
     data.append(0 if has_ring else 1)
     data.append(string_int_lookup(ring_type) if has_ring else 4)
@@ -179,17 +195,32 @@ def save_data_to_csv(cap_diameter, stem_height, stem_width, gill_spacing,
     except Exception as e:
         return f"An error occurred while saving: {str(e)}"
 
-# interface
+###########################################################################################################        
+# Gradio interface
 with gr.Blocks() as app:
     gr.Markdown("# Mushroom Data Interface")
     
+    # Dropdown to select the model
+    model_selector = gr.Dropdown(
+        ["AdaBoost", "DecisionTree", "KNN","MLP", "RandomForest", "SVM", "XGBoost"],
+        label="Select Model",
+        value="RandomForest"
+    )
+
+    # Update the global modelName variable when a model is selected
+    model_selector.change(
+        fn=lambda x: globals().update(modelName=x) or f"Model set to {x}",
+        inputs=model_selector,
+        outputs=None
+    )
+
     # SLIDERS
     cap_diameter = gr.Slider(0.38, 62.34, value=10.0, label="Cap diameter (cm)")
     stem_height = gr.Slider(0.0, 33.92, value=5.0, label="Stem height (cm)")
     stem_width = gr.Slider(0.0, 103.91, value=10.0, label="Stem width (mm)")
     
     # RADIO BUTTONS
-    gill_spacing = gr.Radio(["close", "distant", "none"], label="Gill spacing", value="none")
+    gill_spacing = gr.Radio(["close", "distant"], label="Gill spacing", value="close")
     
     # CHECKBOXES
     does_bruise_bleed = gr.Checkbox(label="Does it bruise or bleed ?")
@@ -208,17 +239,17 @@ with gr.Blocks() as app:
                     label="Color")
     
     gill_attachment = gr.Dropdown(["adnate", "adnexed", "decurrent", "free", 
-                               "sinuate", "pores", "none"],
+                               "sinuate", "pores", "No_attachment"],
                               label="Gill attachment")
     
     stem_root = gr.Dropdown(["bulbous", "swollen", "club", "Filamentous",  "rooted"],
                          label="Stem root")
     
-    # Ring type dropdown (standaard onzichtbaar)
+    # Ring type dropdown (onzichtbaar)
     ring_type = gr.Dropdown(["evanescent", "flaring", "grooved", "large", 
                           "pendant", "zone", "movable"],
                          label="Ring type",
-                         visible=False)  # Standaard onzichtbaar
+                         visible=False)
     
     habitat = gr.Dropdown(["grasses", "leaves", "meadows", "paths", "heaths", 
                        "urban", "waste", "woods"],
@@ -230,7 +261,7 @@ with gr.Blocks() as app:
     # Output
     output = gr.Textbox(label="Result")
     
-    # Submit knop
+    # Submit button
     submit_btn = gr.Button("Submit") #voor een of andere reden wordt submit vert
     submit_btn.click(
         fn=collect_data,
@@ -241,7 +272,7 @@ with gr.Blocks() as app:
         outputs=output
     )                       
 
-    # save knop
+    # save button
     save_btn = gr.Button("Save")
     save_btn.click(
         fn=save_data_to_csv,
@@ -259,14 +290,13 @@ with gr.Blocks() as app:
         inputs=has_ring,
         outputs=ring_type
     )
-    # Voeg voorbeelden toe
+    # snel testen van verschillende modelen met het zelfde voorbeeld
     examples = [
         [10.0, 5.0, 10.0, "close", True, True, "convex", "smooth", "brown", "adnate", "bulbous", "grooved", "woods", "spring"],#poisonous 71.0%
-        [8.0, 3.0, 8.0, "none", True, True, "bell", "shiny", "yellow", "decurrent", "club", "pendant", "urban", "autumn"],#poisonous  67.0%
+        [8.0, 3.0, 8.0, "distant", True, True, "bell", "shiny", "yellow", "decurrent", "club", "pendant", "urban", "autumn"],#poisonous  67.0%
         [5.0, 2.0, 5.0, "close", True, True, "spherical", "scaly", "red", "sinuate", "rooted", "flaring", "heaths", "winter"],#poisonous 69.0%
     ]
 
-    # Voeg de voorbeelden toe aan de interface
     gr.Examples(
         examples=examples,
         inputs=[cap_diameter, stem_height, stem_width, gill_spacing, 

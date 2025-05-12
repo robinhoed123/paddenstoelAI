@@ -4,7 +4,7 @@ Mushroom Data Transformatie Index
 Kolom: cap-diameter
 Range 0: 0.38 - 1.56
 Range 1: 1.56 - 2.74
-Range 2: 2.74 - 3.92   
+Range 2: 2.74 - 3.92
 Range 3: 3.92 - 5.10
 Range 4: 5.10 - 6.29
 Range 5: 6.29 - 7.47
@@ -22,8 +22,6 @@ Range 16: 19.28 - 20.46
 Range 17: 20.46 - 21.64
 Range 18: 21.64 - 22.82
 Range 19: 22.82 - 24.00
-
-
 
 Kolom: stem-height
 Range 0: 0.00 - 0.95

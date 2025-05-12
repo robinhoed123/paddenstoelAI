@@ -18,7 +18,7 @@ cap_surface_translation = {
     "fleshy": 4,      # e=4
     "smooth": 5,      # s=5
     "leathery": 6,    # l=6
-    "dry": 7,         # d=7 ( d komt voor in de dataset  maar er is geen vertaling denk dat dit dry is ben niet zeker) 
+    "dry": 7,         # d=7 ( d komt voor in de dataset maar er is geen vertaling denk dat dit dry is ben niet zeker) 
     "wrinkled": 8,    # w=8
     "fibrous": 9,     # i=9
     "silky": 10       # k=10
@@ -97,4 +97,11 @@ season_translation = {
     "summer": 1,   # u=1
     "autumn": 2,   # a=2
     "spring": 3    # s=3
+}
+
+
+gill_spacing_translation = {
+    "close": 0,    # c=0
+    "distant": 1,  # d=1
+    "none": 2      # f=2
 }

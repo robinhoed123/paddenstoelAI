@@ -16,16 +16,7 @@ def fill_null(df):
     return df_clean
 
 def categorical_to_integer(df_column, file_path):
-    """
-    Deze functie zet categorische data om naar integers en slaat de mapping op in een bestand.
-    
-    Args:
-        df_column: De pandas kolom met categorische data
-        file_path: Het bestandspad waar de mapping wordt opgeslagen
-    
-    Returns:
-        Een pandas Series met de getransformeerde integer data
-    """
+
     # Verkrijg unieke categorieën
     categories = df_column.unique()
     
@@ -83,10 +74,9 @@ def float_to_categorical(df_column, num_divisions,max_val, file_path):
 
 # Main functie
 def main():
-    """
-    Hoofdfunctie die het dataframe inleest, verwerkt en opslaat.
-    """
-    # Maak een nieuw bestand aan voor de indices
+    #Hoofdfunctie die het dataframe inleest, verwerkt en opslaat.
+    
+    # Maak een nieuw txt bestand aan (hierin worden de transformaties opgeslagen van sting naar int)
     with open('mushroomindex.txt', 'w') as f:
         f.write("Mushroom Data Transformatie Index\n")
         f.write("================================\n")
@@ -107,7 +97,7 @@ def main():
     for col_idx in categorical_columns:
         col_name = df_clean.columns[col_idx]
         df_clean[col_name] = categorical_to_integer(df_clean[col_name], 'mushroomindex.txt')
-    #de reden waarom dit gedropt wordt is dat alle waarde van deze feuter 0 zijn (heeft geen waarde)
+    #data dropen dat niet helpt 
     df_clean = df_clean.drop(["veil-type"], axis=1)#alle waarde hier zijn het zelfde voegt niets toe
     df_clean = df_clean.drop(["gill-color"], axis=1) #het zelfde als cap-color 
     df_clean = df_clean.drop(["stem-color"], axis=1) #het zelfde als cap-color 

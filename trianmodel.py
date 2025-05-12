@@ -4,18 +4,23 @@ import json
 import numpy as np
 import pandas as pd
 from datetime import datetime
-from joblib import dump, load
+from joblib import dump
 
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler #nog uit testen
+import matplotlib
+
+from sklearn.tree import plot_tree
+
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split, KFold
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_absolute_error, accuracy_score, classification_report
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
-from sklearn.neural_network import MLPClassifier
+from xgboost import XGBClassifier
+from lightgbm import LGBMClassifier
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+
 
 # Seed
 randstate = 42 #het was een goede film :)
@@ -24,6 +29,68 @@ np.random.seed(randstate)
 # Map voor opslag van modellen
 BASE_MODEL_DIR = 'models'
 os.makedirs(BASE_MODEL_DIR, exist_ok=True)
+
+# Functie om decision trees op te slaan
+def save_decision_trees(clf_name, pipeline, model_dir, max_trees=3, tree_plot_max_depth=12):
+    if clf_name not in ["RandomForest", "DecisionTree", "AdaBoost", "XGBoost"]:
+        return  # Geen tree-gebaseerd model
+
+    classifier = pipeline.named_steps.get('classifier')
+    if not classifier:
+        print(f"Waarschuwing: Classifier stap niet gevonden in pipeline voor {clf_name}.")
+        return
+
+    trees_dir = os.path.join(model_dir, "decision_trees")
+    os.makedirs(trees_dir, exist_ok=True)
+
+    feature_names = None
+    try:
+        if hasattr(pipeline, 'feature_names_in_'):
+            feature_names = list(pipeline.feature_names_in_)
+        elif hasattr(classifier, 'feature_names_in_'):  # Fallback naar classifier
+            feature_names = list(classifier.feature_names_in_)
+    except Exception as e:
+        print(f"Waarschuwing: Kon feature names niet ophalen voor {clf_name}: {e}")
+
+    class_names = [str(c) for c in getattr(classifier, 'classes_', [])] if hasattr(classifier, 'classes_') else None
+
+    trees_to_plot_info = []  # Lijst van (bestandsnaam, boom_estimator)
+
+    if isinstance(classifier, DecisionTreeClassifier):
+        trees_to_plot_info.append(('', classifier)) # Enkele boom
+    elif hasattr(classifier, 'estimators_') and isinstance(classifier.estimators_, list):
+        # als er meer dan 1 boom is (random forest of boosting)
+        plotted_count = 0
+        for i, estimator in enumerate(classifier.estimators_):
+            if plotted_count >= max_trees:
+                break
+            if isinstance(estimator, DecisionTreeClassifier): # Controleer of de estimator een boom is
+                trees_to_plot_info.append((f'_tree_{i}', estimator))
+                plotted_count += 1
+    if not trees_to_plot_info:
+        print(f"Geen bomen gevonden om te plotten voor {clf_name}.")
+        return # Geen bomen gevonden om te plotten
+
+    plotted_actual_count = 0
+    for tree_name, tree_estimator in trees_to_plot_info:
+        plt.figure(figsize=(40, 20))
+        try:
+            plot_tree(tree_estimator,
+                      filled=True,
+                      feature_names=feature_names,
+                      class_names=class_names,
+                      rounded=True,
+                      fontsize=8,
+                      max_depth=tree_plot_max_depth)
+            plt.title(f"{clf_name}{tree_name}")
+            file_path = os.path.join(trees_dir, f"{clf_name.replace(' ', '_')}{tree_name}.svg")
+            plt.savefig(file_path, format="svg", bbox_inches='tight')
+            plotted_actual_count +=1
+        except Exception as e:
+            print(f"Fout bij het opslaan van tree {clf_name}{tree_name}: {e}")
+        finally:
+            plt.close()
+
 
 # Functie om resultaten op te slaan
 def save_model_info(clf_name, pipeline,y_test, y_test_pred, scores, training_time, params, base_dir=BASE_MODEL_DIR):
@@ -36,7 +103,6 @@ def save_model_info(clf_name, pipeline,y_test, y_test_pred, scores, training_tim
     model_path = os.path.join(model_dir, f"{clf_name}_model.joblib")
     dump(pipeline, model_path)
     
-
     info = {
         "Method": clf_name,
         "Pre-processing": str(pipeline.named_steps.get('preprocessor', 'None')),
@@ -64,33 +130,37 @@ def save_model_info(clf_name, pipeline,y_test, y_test_pred, scores, training_tim
     disp.plot(cmap='viridis')
     cm_path = os.path.join(model_dir, f"{clf_name}_confusion_matrix.png")
     disp.figure_.savefig(cm_path)
-
+    plt.close()
+    print(f"Confusion matrix opgeslagen in: {cm_path}")
     # Classification report
     report = classification_report(y_test, y_test_pred, target_names=np.unique(y_test).astype(str))
     report_path = os.path.join(model_dir, f"{clf_name}_classification_report.txt")
     with open(report_path, 'w') as f:
         f.write(report)
-
+    
+    # Decision trees
+    save_decision_trees(clf_name, pipeline, model_dir)  
     print(f"Model en informatie opgeslagen in: {model_dir}")
     
 def train_and_evaluate_classifier(X_train, X_val, X_test, y_train, y_val, y_test, 
                                  clf_name, classifier, param_grid, preprocessor='standard'):
-    """Train en evalueer een classifier met pipeline en grid search"""
+
+    #Train en evalueer een classifier met pipeline en grid search
     
     print(f"\n{'='*50}")
     print(f"Training {clf_name} classifier...")
     print(f"{'='*50}")
     
-    # Definieer preprocessing
-    if preprocessor == 'standard':
-        preprocessor_step = StandardScaler()
-    elif preprocessor == 'minmax':
-        preprocessor_step = MinMaxScaler()
-    else:
-        preprocessor_step = None
-    
-    # pipeline
+    # probeer hier pre processing toe te voegen (scalers)
+    preprocessor_step = None
     pipeline_steps = []
+    
+    # Voeg MinMaxScaler toe als preprocessor indien nodig
+    if preprocessor == 'minmax':
+        preprocessor_step = MinMaxScaler()
+    elif preprocessor == 'standard':
+        preprocessor_step = StandardScaler()
+    
     if preprocessor_step:
         pipeline_steps.append(('preprocessor', preprocessor_step))
     
@@ -165,7 +235,6 @@ def train_and_evaluate_classifier(X_train, X_val, X_test, y_train, y_val, y_test
     
     return best_pipeline, scores
 
-
 def load_data():
 
     # Laad de dataset
@@ -206,13 +275,13 @@ def main():
                 "classifier__max_depth": [None, 10, 20],
             }
         },
-        "SVM": {
-            "clf": SVC(probability=True, random_state=randstate),
-            "params": {
-                "classifier__C": [0.1, 1, 10],
-                "classifier__kernel": ["linear", "rbf"],
-            }
-        },
+        # "SVM": { #staat in commentaar omdat het te traag is
+        #     "clf": SVC(probability=True, random_state=randstate),
+        #     "params": {
+        #         "classifier__C": [0.1, 1, 10],
+        #         "classifier__kernel": ["linear", "rbf"],
+        #     }
+        # },
         "AdaBoost": {
             "clf": AdaBoostClassifier(random_state=randstate),
             "params": {
@@ -234,15 +303,17 @@ def main():
                 "classifier__weights": ["uniform", "distance"],
             }
         },
-        "MLP": {
-            "clf": MLPClassifier(random_state=randstate, max_iter=200),
+        "XGBoost": {
+            "clf": XGBClassifier(random_state=randstate),
             "params": {
-                "classifier__hidden_layer_sizes": [(50,), (100,), (50, 50)],
-                "classifier__alpha": [0.0001, 0.001, 0.01],
-                "classifier__batch_size": [32, 64, 128],  # Batch size voor batch normalization effect
+                "classifier__n_estimators": [50, 100, 200, 300, 400],
+                "classifier__max_depth": [3, 6, 10],
+                "classifier__learning_rate": [0.01, 0.1, 0.2],
             }
-        }
+        },
+
     }
+    
     
     # Train en evalueer elke classifier
     results = {}
@@ -266,7 +337,7 @@ def main():
     
     # Overzicht van resultaten
     print("\n\n" + "="*80)
-    print("OVERZICHT VAN RESULTATEN")
+    print(" "*28 + "OVERZICHT VAN RESULTATEN")
     print("="*80)
     
     # Maak DataFrame voor makkelijke vergelijking
@@ -282,7 +353,7 @@ def main():
     # Sorteer op Test Accuracy
     results_df = results_df.sort_values('Test Accuracy', ascending=False)
     
-    print(results_df.to_string(index=False))
+    print(results_df)
     print("\nAlle modellen zijn getraind en opgeslagen in:", BASE_MODEL_DIR)
 
 if __name__ == "__main__":
