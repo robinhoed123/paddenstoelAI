@@ -3,32 +3,27 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
-from datetime import datetime
 
 def create_output_directory(output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
         print(f"Created output directory: {output_dir}")
-    
     return output_dir
 
 def read_csv_data(file_path):
     try:
         df = pd.read_csv(file_path)
         print(f"Successfully read data from {file_path}")
-        print(f"Data shape: {df.shape}")
         return df
     except Exception as e:
         print(f"Error reading CSV file: {e}")
         return None
 
-def visualize_correlation_matrix(df, output_dir):
-    """Create and save correlation matrix visualization"""
+def plot_correlation_matrix(df, output_dir):
     try:
         # correlation matrix
-        numeric_df = df.select_dtypes(include=[np.number])
         plt.figure(figsize=(12, 10))
-        corr_matrix = numeric_df.corr()
+        corr_matrix = df.corr()
         
         # heatmap
         sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt='.2f', linewidths=0.5)
@@ -39,11 +34,10 @@ def visualize_correlation_matrix(df, output_dir):
         output_path = os.path.join(output_dir, 'correlation_matrix.png')
         plt.savefig(output_path, dpi=300)
         plt.close()
-        print(f"Correlation matrix saved to {output_path}")
     except Exception as e:
         print(f"Error creating correlation matrix: {e}")
 
-def visualize_column_frequencies(df, output_dir):
+def plot_column_frequencies(df, output_dir):
     # subplots in een grind 3X4
     try:
         num_columns = len(df.columns)
@@ -62,28 +56,20 @@ def visualize_column_frequencies(df, output_dir):
         plt.tight_layout()
         
         # Save png
-        output_path = os.path.join(output_dir, 'frequency_subplots.png')
+        output_path = os.path.join(output_dir, 'frequency_Plot.png')
         plt.savefig(output_path, dpi=300)
         plt.close()
-        print(f"Frequency plots saved to {output_path}")
     except Exception as e:
         print(f"Error creating frequency plots: {e}")
-def visualize_float_column_plots(columns, df, output_dir):
+def plot_float_column(columns, df, output_dir):
     try:
-        # Filter float columns
-        float_columns = [col for col in columns if df[col].dtype == 'float64']
-        
-        if not float_columns:
-            print("No float columns found for plotting")
-            return
-        
-        num_columns = len(float_columns)
+        num_columns = len(columns)
         num_rows = (num_columns + 2) // 3
         
         fig, axes = plt.subplots(num_rows, 3, figsize=(15, 5 * num_rows))
         axes = axes.flatten() 
         
-        for i, column in enumerate(float_columns):
+        for i, column in enumerate(columns):
             ax = axes[i]
             ax.plot(df[column], marker='.', linestyle='-', label=column)
             ax.set_title(f'Plot of {column}', fontsize=12)
@@ -93,10 +79,9 @@ def visualize_float_column_plots(columns, df, output_dir):
         plt.tight_layout()
         
         # Save as png
-        output_path = os.path.join(output_dir, 'float_column_plots.png')
+        output_path = os.path.join(output_dir, 'columns_Plot.png')
         plt.savefig(output_path, dpi=300)
         plt.close()
-        print(f"Float column plots saved to {output_path}")
     except Exception as e:
         print(f"Error creating float column plots: {e}")
 
@@ -128,22 +113,52 @@ def visualize_float_column_plots(columns, df, output_dir):
     except Exception as e:
         print(f"Error creating pairplot: {e}")
 
+def plot_mutual_information(df, output_dir):
+    try:
+        from sklearn.feature_selection import mutual_info_classif
+        
+        # Separate features and target
+        X = df.drop('class', axis=1)
+        y = df['class']
+        
+        # Calculate mutual information
+        mi_scores = mutual_info_classif(X, y, discrete_features=True)
+        
+        # Create a DataFrame for better visualization
+        mi_df = pd.DataFrame({
+            'Feature': X.columns,
+            'Mutual Information': mi_scores
+        }).sort_values('Mutual Information', ascending=False)
+        
+        # Plot
+        plt.figure(figsize=(12, 8))
+        sns.barplot(x='Mutual Information', y='Feature', data=mi_df)
+        plt.title('Mutual Information with Target Class', fontsize=16)
+        plt.tight_layout()
+        
+        # Save plot
+        output_path = os.path.join(output_dir, 'mutual_information.png')
+        plt.savefig(output_path, dpi=300)
+        plt.close()
+        
+        print(f"Mutual information plot saved to {output_path}")
+    except Exception as e:
+        print(f"Error creating mutual information plot: {e}")
 
 def main():
     output_dir = create_output_directory("plot data")
     
     #data inlezen om te plotten
-    file_path = "MushroomDataset/Mushroomdataclean.csv"
+    file_path = "MushroomDataset\Mushroomdataclean.csv"
     df = read_csv_data(file_path)
     
     if df is not None:
-        visualize_correlation_matrix(df, output_dir)
-        visualize_column_frequencies(df, output_dir)
-        visualize_float_column_plots(["stem-width", "stem-height","cap-diameter"], df, output_dir)
-
-        print(f"\ngelukt data opgeslagen in '{output_dir}'")
+        plot_correlation_matrix(df, output_dir)
+        plot_mutual_information(df, output_dir)
+        # plot_column_frequencies(df, output_dir)
+        plot_float_column(["stem-width", "stem-height","cap-diameter"], df, output_dir)
     else:
-        print(f"error kan van  '{file_path}' geen data inlezen")
+        print(f"Error: could not read data from '{file_path}'")
 
 if __name__ == "__main__":
     main()

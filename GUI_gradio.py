@@ -1,26 +1,19 @@
 import gradio as gr
 from joblib import load
 import csv
-
-
 # met deze code kun je heel gemakkelijk de modelen testen in een GUI
 # en de resultaten worden opgeslagen in een csv bestand
 production = None
 confidence = 0.0
 modelName="RandomForest"
 
-# functie om een voorspelling te maken met een geseledc model
+# functie om een voorspelling te maken met een geselecteerd model
 def make_prediction(input_data):
     global prodiction, confidence,model
     try:
-        # Load the AI model from a joblib file
         model = load(f"models\{modelName}\{modelName}_model.joblib")
-
-        # Predict
         prediction = model.predict([input_data])
         probabilities = model.predict_proba([input_data])
-        
-        # Get the predicted feature and its confidence
         predicted_feature = prediction[0]
         confidence = max(probabilities[0]) * 100  #om zetten naar procent
         if predicted_feature == 1:
@@ -147,17 +140,17 @@ def collect_data(cap_diameter, stem_height, stem_width, gill_spacing,
     data.append(slider_int_corection(cap_diameter,0))
     data.append(slider_int_corection(stem_height, 1))
     data.append(slider_int_corection(stem_width, 2))
-    data.append(string_int_lookup(gill_spacing))
-    data.append(string_int_lookup(cap_shape))
-    data.append(string_int_lookup(surface))
-    data.append(string_int_lookup(color))
+    data.append(gill_spacing)
+    data.append(cap_shape)
+    data.append(surface)
+    data.append(color)
     data.append(1 if does_bruise_bleed else 0)
-    data.append(string_int_lookup(gill_attachment))
-    data.append(string_int_lookup(stem_root))
+    data.append(gill_attachment)
+    data.append(stem_root)
     data.append(0 if has_ring else 1)
-    data.append(string_int_lookup(ring_type) if has_ring else 4)
-    data.append(string_int_lookup(habitat))
-    data.append(string_int_lookup(season))
+    data.append(ring_type if has_ring else 4)
+    data.append(habitat)
+    data.append(season)
     print(season)
 
     return make_prediction(data) 
@@ -220,43 +213,59 @@ with gr.Blocks() as app:
     stem_width = gr.Slider(0.0, 103.91, value=10.0, label="Stem width (mm)")
     
     # RADIO BUTTONS
-    gill_spacing = gr.Radio(["close", "distant"], label="Gill spacing", value="close")
+    gill_spacing = gr.Radio([("close", 0), ("distant", 1)], label="Gill spacing", value="close")
     
     # CHECKBOXES
     does_bruise_bleed = gr.Checkbox(label="Does it bruise or bleed ?")
     has_ring = gr.Checkbox(label="Has ring")
     
     # DROPDOWNS
-    cap_shape = gr.Dropdown(["bell", "conical", "convex", "flat", "sunken", "spherical", "others"],
-                         label="Cap shape")
+    cap_shape = gr.Dropdown(
+        [("bell", 3), ("conical", 4), ("convex", 0), ("flat", 1), ("sunken", 5), ("spherical", 2), ("others", 6)],
+        label="Cap shape"
+    )
     
-    surface = gr.Dropdown(["dry","fibrous", "grooves", "scaly", "smooth", "shiny", 
-                       "leathery", "silky", "sticky", "wrinkled", "fleshy"],
-                      label="Surface")
+    surface = gr.Dropdown(
+        [("dry", 7), ("fibrous", 9), ("grooves", 0), ("scaly", 3), ("smooth", 5), ("shiny", 1), 
+         ("leathery", 6), ("silky", 10), ("sticky", 2), ("wrinkled", 8), ("fleshy", 4)],
+        label="Surface"
+    )
     
-    color = gr.Dropdown(["brown", "buff", "gray", "green", "pink", "purple", 
-                     "red", "white", "yellow", "blue", "orange", "black"],
-                    label="Color")
+    color = gr.Dropdown(
+        [("brown", 2), ("buff", 9), ("gray", 3), ("green", 4), ("pink", 7), ("purple", 8), 
+         ("red", 1), ("white", 5), ("yellow", 6), ("blue", 10), ("orange", 0), ("black", 11)],
+        label="Color"
+    )
     
-    gill_attachment = gr.Dropdown(["adnate", "adnexed", "decurrent", "free", 
-                               "sinuate", "pores", "No_attachment"],
-                              label="Gill attachment")
+    gill_attachment = gr.Dropdown(
+        [("adnate", 1), ("adnexed", 4), ("decurrent", 2), ("free", 0), 
+         ("sinuate", 3), ("pores", 5), ("No_attachment", 6)],
+        label="Gill attachment"
+    )
     
-    stem_root = gr.Dropdown(["bulbous", "swollen", "club", "Filamentous",  "rooted"],
-                         label="Stem root")
+    stem_root = gr.Dropdown(
+        [("bulbous", 1), ("swollen", 0), ("club", 3), ("Filamentous", 4), ("rooted", 2)],
+        label="Stem root"
+    )
     
     # Ring type dropdown (onzichtbaar)
-    ring_type = gr.Dropdown(["evanescent", "flaring", "grooved", "large", 
-                          "pendant", "zone", "movable"],
-                         label="Ring type",
-                         visible=False)
+    ring_type = gr.Dropdown(
+        [("evanescent", 2), ("flaring", 6), ("grooved", 0), ("large", 3), 
+         ("pendant", 1), ("zone", 7), ("movable", 5)],
+        label="Ring type",
+        visible=False
+    )
     
-    habitat = gr.Dropdown(["grasses", "leaves", "meadows", "paths", "heaths", 
-                       "urban", "waste", "woods"],
-                      label="Habitat")
+    habitat = gr.Dropdown(
+        [("grasses", 2), ("leaves", 4), ("meadows", 1), ("paths", 5), ("heaths", 3), 
+         ("urban", 7), ("waste", 6), ("woods", 0)],
+        label="Habitat"
+    )
     
-    season = gr.Dropdown(["spring", "summer", "autumn", "winter"],
-                      label="Season")
+    season = gr.Dropdown(
+        [("spring", 3), ("summer", 1), ("autumn", 2), ("winter", 0)],
+        label="Season"
+    )
     
     # Output
     output = gr.Textbox(label="Result")
@@ -292,9 +301,9 @@ with gr.Blocks() as app:
     )
     # snel testen van verschillende modelen met het zelfde voorbeeld
     examples = [
-        [10.0, 5.0, 10.0, "close", True, True, "convex", "smooth", "brown", "adnate", "bulbous", "grooved", "woods", "spring"],#poisonous 71.0%
-        [8.0, 3.0, 8.0, "distant", True, True, "bell", "shiny", "yellow", "decurrent", "club", "pendant", "urban", "autumn"],#poisonous  67.0%
-        [5.0, 2.0, 5.0, "close", True, True, "spherical", "scaly", "red", "sinuate", "rooted", "flaring", "heaths", "winter"],#poisonous 69.0%
+        [10.0, 5.0, 10.0, ("close", 0), True, True, ("convex", 0), ("smooth", 5), ("brown", 2), ("adnate", 1), ("bulbous", 1), ("grooved", 0), ("woods", 0), ("spring", 3)],#poisonous 71.0%
+        [8.0, 3.0, 8.0, ("distant", 1), True, True, ("bell", 3), ("shiny", 1), ("yellow", 6), ("decurrent", 2), ("club", 3), ("pendant", 1), ("urban", 7), ("autumn", 2)],#poisonous  67.0%
+        [5.0, 2.0, 5.0, ("close", 0), True, True, ("spherical", 2), ("scaly", 3), ("red", 1), ("sinuate", 3), ("rooted", 2), ("flaring", 6), ("heaths", 3), ("winter", 0)],#poisonous 69.0%
     ]
 
     gr.Examples(

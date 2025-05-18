@@ -3,16 +3,13 @@
     "Pre-processing": "StandardScaler()",
     "Data splits": "5-fold cross validation",
     "Feature extraction": "None",
-    "MAE on validation set (mm)": "0.2749",
-    "MAE on test set": "0.2792",
-    "Accuracy on validation set": "0.7251",
-    "Accuracy on test set": "0.7208",
-    "Cross-validation mean accuracy": "0.7313",
-    "Cross-validation std accuracy": "0.0104",
-    "Training time (s)": "13.82",
+    "MAE on test set": "0.2100",
+    "Accuracy on test set": "0.7900",
+    "Cross-validation mean accuracy": "0.7841",
+    "Cross-validation std accuracy": "0.0081",
+    "Training time (s)": "29.71",
     "Tuned parameters": {
         "classifier__learning_rate": 1.0,
         "classifier__n_estimators": 200
-    },
-    "Timestamp": "2025-05-10 19:26:19"
+    }
 }

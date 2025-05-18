@@ -3,11 +3,7 @@ import time
 import json
 import numpy as np
 import pandas as pd
-from datetime import datetime
 from joblib import dump
-
-from sklearn.preprocessing import StandardScaler, MinMaxScaler #nog uit testen
-import matplotlib
 
 from sklearn.tree import plot_tree
 
@@ -20,6 +16,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
+from sklearn.svm import SVC
 
 
 # Seed
@@ -32,14 +30,10 @@ os.makedirs(BASE_MODEL_DIR, exist_ok=True)
 
 # Functie om decision trees op te slaan
 def save_decision_trees(clf_name, pipeline, model_dir, max_trees=3, tree_plot_max_depth=12):
-    if clf_name not in ["RandomForest", "DecisionTree", "AdaBoost", "XGBoost"]:
-        return  # Geen tree-gebaseerd model
+    if clf_name not in ["RandomForest", "DecisionTree", "AdaBoost", "XGBoost", "LightGBM"]:
+        return  
 
     classifier = pipeline.named_steps.get('classifier')
-    if not classifier:
-        print(f"Waarschuwing: Classifier stap niet gevonden in pipeline voor {clf_name}.")
-        return
-
     trees_dir = os.path.join(model_dir, "decision_trees")
     os.makedirs(trees_dir, exist_ok=True)
 
@@ -47,10 +41,8 @@ def save_decision_trees(clf_name, pipeline, model_dir, max_trees=3, tree_plot_ma
     try:
         if hasattr(pipeline, 'feature_names_in_'):
             feature_names = list(pipeline.feature_names_in_)
-        elif hasattr(classifier, 'feature_names_in_'):  # Fallback naar classifier
-            feature_names = list(classifier.feature_names_in_)
     except Exception as e:
-        print(f"Waarschuwing: Kon feature names niet ophalen voor {clf_name}: {e}")
+        print(f"Kon feature names niet ophalen voor {clf_name}: {e}")
 
     class_names = [str(c) for c in getattr(classifier, 'classes_', [])] if hasattr(classifier, 'classes_') else None
 
@@ -59,18 +51,17 @@ def save_decision_trees(clf_name, pipeline, model_dir, max_trees=3, tree_plot_ma
     if isinstance(classifier, DecisionTreeClassifier):
         trees_to_plot_info.append(('', classifier)) # Enkele boom
     elif hasattr(classifier, 'estimators_') and isinstance(classifier.estimators_, list):
-        # als er meer dan 1 boom is (random forest of boosting)
+        # RandomForest of has more trees
         plotted_count = 0
         for i, estimator in enumerate(classifier.estimators_):
             if plotted_count >= max_trees:
                 break
-            if isinstance(estimator, DecisionTreeClassifier): # Controleer of de estimator een boom is
+            if isinstance(estimator, DecisionTreeClassifier):
                 trees_to_plot_info.append((f'_tree_{i}', estimator))
                 plotted_count += 1
     if not trees_to_plot_info:
         print(f"Geen bomen gevonden om te plotten voor {clf_name}.")
-        return # Geen bomen gevonden om te plotten
-
+        return 
     plotted_actual_count = 0
     for tree_name, tree_estimator in trees_to_plot_info:
         plt.figure(figsize=(40, 20))
@@ -91,10 +82,8 @@ def save_decision_trees(clf_name, pipeline, model_dir, max_trees=3, tree_plot_ma
         finally:
             plt.close()
 
-
 # Functie om resultaten op te slaan
 def save_model_info(clf_name, pipeline,y_test, y_test_pred, scores, training_time, params, base_dir=BASE_MODEL_DIR):
-    """Sla model en bijbehorende informatie op"""
     # Maak directory voor deze classifier
     model_dir = os.path.join(base_dir, clf_name)
     os.makedirs(model_dir, exist_ok=True)
@@ -107,16 +96,12 @@ def save_model_info(clf_name, pipeline,y_test, y_test_pred, scores, training_tim
         "Method": clf_name,
         "Pre-processing": str(pipeline.named_steps.get('preprocessor', 'None')),
         "Data splits": "5-fold cross validation",
-        "Feature extraction": str(pipeline.named_steps.get('feature_engineer', 'None')),
-        "MAE on validation set (mm)": f"{scores['val_mae']:.4f}",
         "MAE on test set": f"{scores['test_mae']:.4f}",
-        "Accuracy on validation set": f"{scores['val_accuracy']:.4f}",
         "Accuracy on test set": f"{scores['test_accuracy']:.4f}",
         "Cross-validation mean accuracy": f"{scores['cv_mean_accuracy']:.4f}",
         "Cross-validation std accuracy": f"{scores['cv_std_accuracy']:.4f}",
         "Training time (s)": f"{training_time:.2f}",
         "Tuned parameters": params,
-        "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
     
     # opslaan in JSON formaat
@@ -142,8 +127,8 @@ def save_model_info(clf_name, pipeline,y_test, y_test_pred, scores, training_tim
     save_decision_trees(clf_name, pipeline, model_dir)  
     print(f"Model en informatie opgeslagen in: {model_dir}")
     
-def train_and_evaluate_classifier(X_train, X_val, X_test, y_train, y_val, y_test, 
-                                 clf_name, classifier, param_grid, preprocessor='standard'):
+def train_and_evaluate_classifier(X_train, X_test, y_train, y_test, 
+                                 clf_name, classifier, param_grid):
 
     #Train en evalueer een classifier met pipeline en grid search
     
@@ -151,18 +136,8 @@ def train_and_evaluate_classifier(X_train, X_val, X_test, y_train, y_val, y_test
     print(f"Training {clf_name} classifier...")
     print(f"{'='*50}")
     
-    # probeer hier pre processing toe te voegen (scalers)
-    preprocessor_step = None
     pipeline_steps = []
     
-    # Voeg MinMaxScaler toe als preprocessor indien nodig
-    if preprocessor == 'minmax':
-        preprocessor_step = MinMaxScaler()
-    elif preprocessor == 'standard':
-        preprocessor_step = StandardScaler()
-    
-    if preprocessor_step:
-        pipeline_steps.append(('preprocessor', preprocessor_step))
     
     # Voeg classifier toe
     pipeline_steps.append(('classifier', classifier))
@@ -205,25 +180,18 @@ def train_and_evaluate_classifier(X_train, X_val, X_test, y_train, y_val, y_test
     print(f"Cross-validation accuracy: {cv_mean:.4f} ± {cv_std:.4f}")
     
     # Voorspellingen
-    y_val_pred = best_pipeline.predict(X_val)
     y_test_pred = best_pipeline.predict(X_test)
     
     # Bereken metrics
-    val_mae = mean_absolute_error(y_val, y_val_pred)
     test_mae = mean_absolute_error(y_test, y_test_pred)
-    val_accuracy = accuracy_score(y_val, y_val_pred)
     test_accuracy = accuracy_score(y_test, y_test_pred)
     
-    print(f"\nValidatie MAE: {val_mae:.4f}")
     print(f"Test MAE: {test_mae:.4f}")
-    print(f"Validatie accuracy: {val_accuracy:.4f}")
     print(f"Test accuracy: {test_accuracy:.4f}")
     
     # Sla scores op
     scores = {
-        'val_mae': val_mae,
         'test_mae': test_mae,
-        'val_accuracy': val_accuracy,
         'test_accuracy': test_accuracy,
         'cv_mean_accuracy': cv_mean,
         'cv_std_accuracy': cv_std
@@ -245,26 +213,21 @@ def load_data():
     print(X)
     print(y)
     # Split data
-    X_train_val, X_test, y_train_val, y_test = train_test_split(
+    X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=randstate
     )
     
-    X_train, X_val, y_train, y_val = train_test_split(
-        X_train_val, y_train_val, test_size=0.25, random_state=randstate
-    )
-    
     print(f"Training data: {X_train.shape}")
-    print(f"Validatie data: {X_val.shape}")
     print(f"Test data: {X_test.shape}")
     
-    return X_train, X_val, X_test, y_train, y_val, y_test
+    return X_train, X_test, y_train, y_test
 
 
 def main():
     """Hoofdfunctie om alle classifiers te trainen"""
     # Laad data
     print("Data wordt geladen en gesplitst...")
-    X_train, X_val, X_test, y_train, y_val, y_test = load_data()
+    X_train, X_test, y_train, y_test = load_data()
     
     # Definieer classifiers en parameter grids
     classifiers = {
@@ -272,35 +235,42 @@ def main():
             "clf": RandomForestClassifier(random_state=randstate),
             "params": {
                 "classifier__n_estimators": [50, 100, 200],
-                "classifier__max_depth": [None, 10, 20],
+                "classifier__max_depth": [ 10, 20, 30, 40, 50],
+                "classifier__min_samples_split": [2, 5, 10],
+                "classifier__min_samples_leaf": [1, 2, 4],
+                "classifier__max_features": ["sqrt", "log2"],
+                "classifier__bootstrap": [True, False],
             }
         },
-        # "SVM": { #staat in commentaar omdat het te traag is
-        #     "clf": SVC(probability=True, random_state=randstate),
-        #     "params": {
-        #         "classifier__C": [0.1, 1, 10],
-        #         "classifier__kernel": ["linear", "rbf"],
-        #     }
-        # },
+        "SVM": { #staat in commentaar omdat het te traag is
+            "clf": SVC(probability=True, random_state=randstate),
+            "params": {
+                "classifier__C": [0.1, 1, 10],
+                "classifier__kernel": ["linear", "rbf"],
+            }
+        },
         "AdaBoost": {
             "clf": AdaBoostClassifier(random_state=randstate),
             "params": {
-                "classifier__n_estimators": [50, 100, 200],
-                "classifier__learning_rate": [0.01, 0.1, 1.0],
+                "classifier__n_estimators": [50, 100, 200, 300, 400, 500],
+                "classifier__learning_rate": [0.01, 0.1,0.5, 1.0],
             }
         },
         "DecisionTree": {
             "clf": DecisionTreeClassifier(random_state=randstate),
             "params": {
-                "classifier__max_depth": [None, 10, 20, 30],
-                "classifier__min_samples_split": [2, 5, 10],
+                "classifier__max_depth": [10, 20, 30,40,50],  
+                "classifier__min_samples_leaf": [1, 2, 4],  # Minimum samples per blad(leaf): hogere waarden maken de boom minder gedetailleerd/complex
+                "classifier__min_samples_split": [2, 5, 10],  # Minimum samples voor een splitsing: hogere waarden geven minder splitsingen(kleiner boom)
+
             }
         },
         "KNN": {
             "clf": KNeighborsClassifier(),
             "params": {
-                "classifier__n_neighbors": [3, 5, 7, 10],
+                "classifier__n_neighbors": [3, 5, 7, 10],  
                 "classifier__weights": ["uniform", "distance"],
+                "classifier__leaf_size": [10, 20, 30],  # Bladgrootte: beïnvloedt snelheid van zoeken naar buren
             }
         },
         "XGBoost": {
@@ -308,7 +278,15 @@ def main():
             "params": {
                 "classifier__n_estimators": [50, 100, 200, 300, 400],
                 "classifier__max_depth": [3, 6, 10],
-                "classifier__learning_rate": [0.01, 0.1, 0.2],
+                "classifier__learning_rate": [0.01, 0.1, 0.5, 1.0],  
+            }
+        },
+        "LightGBM": {
+            "clf": LGBMClassifier(random_state=randstate),
+            "params": {
+                "classifier__n_estimators": [50, 100, 200, 300, 400],
+                "classifier__max_depth": [3, 6, 10],
+                "classifier__learning_rate": [0.01, 0.1, 0.5, 1.0],
             }
         },
 
@@ -320,41 +298,12 @@ def main():
     for name, config in classifiers.items():
         print(f"\nTraining {name} classifier...")
         
-        # Bepaal geschikte preprocessor
-        preprocessor = 'standard'
-        if name == 'KNN' or name == 'SVM':
-            preprocessor = 'minmax'
-        elif name == 'MLP':  # Gebruik batch normalization voor MLP
-            preprocessor = 'batch_norm'
-        
         # Train en evalueer
         scores = train_and_evaluate_classifier(
-            X_train, X_val, X_test, y_train, y_val, y_test,
-            name, config["clf"], config["params"], preprocessor
+            X_train, X_test, y_train, y_test,
+            name, config["clf"], config["params"]
         )
         
-        results[name] = scores
-    
-    # Overzicht van resultaten
-    print("\n\n" + "="*80)
-    print(" "*28 + "OVERZICHT VAN RESULTATEN")
-    print("="*80)
-    
-    # Maak DataFrame voor makkelijke vergelijking
-    results_df = pd.DataFrame({
-        'Classifier': list(results.keys()),
-        'Val MAE': [results[k]['val_mae'] for k in results],
-        'Test MAE': [results[k]['test_mae'] for k in results],
-        'Val Accuracy': [results[k]['val_accuracy'] for k in results],
-        'Test Accuracy': [results[k]['test_accuracy'] for k in results],
-        'CV Mean Accuracy': [results[k]['cv_mean_accuracy'] for k in results],
-    })
-    
-    # Sorteer op Test Accuracy
-    results_df = results_df.sort_values('Test Accuracy', ascending=False)
-    
-    print(results_df)
-    print("\nAlle modellen zijn getraind en opgeslagen in:", BASE_MODEL_DIR)
 
 if __name__ == "__main__":
     main()

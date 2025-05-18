@@ -44,14 +44,10 @@ def load_data():
     return X_train, X_val, X_test, y_train, y_val, y_test
 
 def create_model(hp):
-    """
-    # Model bouwfunctie voor KerasTuner
-    # Deze functie maakt een model met hyperparameters die getuned kunnen worden
-    """
     model = keras.Sequential()
     
     # Input laag
-    model.add(layers.Input(shape=(X_train.shape[1],)))
+    model.add(layers.Input(shape=(14,)))
     
     # Voeg verborgen lagen toe met instelbare eenheden
     for i in range(hp.Int('num_layers', 1, 3)):
@@ -80,9 +76,9 @@ def create_model(hp):
     
     return model
 
-def build_standard_model(input_shape):
+def build_standard_model():
     model = keras.Sequential([
-        layers.Input(shape=input_shape),
+        layers.Input(shape=(14,)),
         layers.Dense(64, activation='relu'),
         layers.BatchNormalization(),
         layers.Dropout(0.3),
@@ -253,7 +249,8 @@ def main():
     # best_model = tune_hyperparameters(X_train, y_train, X_val, y_val)
     
     # Of gebruik een standaard model zonder tuning
-    best_model = build_standard_model(X_train.shape[1])
+    print(X_train.shape[1])
+    best_model = build_standard_model()
     
     # Train het model
     history, trained_model = train_model(best_model, X_train, y_train, X_val, y_val)

@@ -1,18 +1,18 @@
 {
     "Method": "RandomForest",
-    "Pre-processing": "StandardScaler()",
+    "Pre-processing": "None",
     "Data splits": "5-fold cross validation",
-    "Feature extraction": "None",
-    "MAE on validation set (mm)": "0.0019",
-    "MAE on test set": "0.0017",
-    "Accuracy on validation set": "0.9981",
-    "Accuracy on test set": "0.9983",
-    "Cross-validation mean accuracy": "0.9980",
-    "Cross-validation std accuracy": "0.0006",
-    "Training time (s)": "16.95",
+    "MAE on test set": "0.0002",
+    "Accuracy on test set": "0.9998",
+    "Cross-validation mean accuracy": "0.9997",
+    "Cross-validation std accuracy": "0.0001",
+    "Training time (s)": "1226.37",
     "Tuned parameters": {
-        "classifier__max_depth": null,
-        "classifier__n_estimators": 200
-    },
-    "Timestamp": "2025-05-10 19:25:24"
+        "classifier__bootstrap": true,
+        "classifier__max_depth": 30,
+        "classifier__max_features": "sqrt",
+        "classifier__min_samples_leaf": 1,
+        "classifier__min_samples_split": 5,
+        "classifier__n_estimators": 100
+    }
 }
